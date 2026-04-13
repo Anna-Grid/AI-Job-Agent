@@ -1,0 +1,163 @@
+# --- Project Structure (Docker-ready modular design) ---
+
+"""
+Project structure:
+
+├── main.py                  # Application orchestrator
+├── src/
+│   ├── generator.py        # AI generation engine with caching
+│   ├── parser.py           # Multi-source job scraper
+│   ├── google_sheets.py    # Google Sheets integration (data sink)
+├── Dockerfile              # Containerized runtime environment
+"""
+
+# --- generator.py — AI generation with caching ---
+
+import hashlib
+import logging
+from typing import Dict, Any
+
+# Configure module-level logger
+logger = logging.getLogger(__name__)
+
+# Assume these utilities are implemented elsewhere
+# from src.cache import cache_exists, load_from_cache, save_to_cache
+# from src.prompting import build_tailored_prompt, determine_language
+# from src.client import openai_client
+
+
+def generate_application(job_data: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Generate a job application using an LLM with caching to reduce API costs.
+
+    Workflow:
+    1. Generate a unique hash based on the job URL.
+    2. Check if a cached response already exists.
+    3. If cached → return cached result.
+    4. Otherwise:
+        - Detect target language (DE/EN)
+        - Build a tailored prompt
+        - Call OpenAI API
+        - Cache and return result
+
+    Args:
+        job_data (dict): Parsed job posting data. Must include 'url'.
+
+    Returns:
+        dict: Generated application content (JSON format).
+    """
+
+    job_url = job_data.get("url")
+    if not job_url:
+        logger.error("Missing 'url' in job_data")
+        raise ValueError("job_data must contain 'url'")
+
+    # Create deterministic cache key based on job URL
+    job_id = hashlib.md5(job_url.encode("utf-8")).hexdigest()
+    logger.info(f"Processing job_id={job_id}")
+
+    # Return cached result if available
+    if cache_exists(job_id):
+        logger.info(f"Cache hit for job_id={job_id}")
+        return load_from_cache(job_id)
+
+    logger.info(f"Cache miss for job_id={job_id} — generating new application")
+
+    # Detect language automatically (German / English)
+    target_lang = determine_language(job_data)
+    logger.debug(f"Detected language: {target_lang}")
+
+    # Build prompt with candidate-specific tailoring
+    prompt = build_tailored_prompt(job_data, target_lang)
+
+    try:
+        # Call OpenAI API
+        response = openai_client.chat.completions.create(
+            model="gpt-4o-mini",
+            response_format={"type": "json_object"},
+            messages=prompt,
+        )
+
+        logger.info(f"Successfully generated application for job_id={job_id}")
+
+    except Exception as e:
+        logger.exception(f"OpenAI request failed for job_id={job_id}")
+        raise
+
+    # Save response to cache and return
+    return save_to_cache(job_id, response)
+
+
+# --- google_sheets.py — Google Sheets integration ---
+
+import logging
+from typing import Dict, List
+
+logger = logging.getLogger(__name__)
+
+HEADER: List[str] = [
+    "company",
+    "position",
+    "status",
+    "date_applied",
+    "notes",
+]
+
+
+class GoogleSheetClient:
+    """
+    Wrapper for Google Sheets API to store job application data.
+
+    Features:
+    - Ensures header consistency
+    - Appends structured rows
+    - Gracefully handles missing fields
+    """
+
+    def __init__(self, sheet):
+        """
+        Args:
+            sheet: Initialized Google Sheets client instance.
+        """
+        self.sheet = sheet
+        self.sheet_initialized = False
+
+    def append_application(self, row_data: Dict[str, str]) -> None:
+        """
+        Append a new job application row to the sheet.
+
+        Args:
+            row_data (dict): Dictionary with keys matching HEADER.
+        """
+
+        logger.info("Appending new application to Google Sheets")
+
+        # Ensure header exists before first write
+        if not self.sheet_initialized:
+            logger.debug("Initializing sheet header")
+            self._ensure_header(HEADER)
+            self.sheet_initialized = True
+
+        # Normalize row according to header structure
+        formatted_row = [row_data.get(column, "") for column in HEADER]
+
+        # Append row to Google Sheet
+        self.sheet.append_row(
+            formatted_row,
+            value_input_option="USER_ENTERED",
+        )
+
+        logger.info("Row successfully appended")
+
+    def _ensure_header(self, header: List[str]) -> None:
+        """
+        Ensure the sheet contains the correct header row.
+
+        Args:
+            header (list): List of column names.
+        """
+        existing_header = self.sheet.row_values(1)
+
+        if existing_header != header:
+            logger.warning("Header mismatch detected — updating header row")
+            self.sheet.insert_row(header, index=1)
