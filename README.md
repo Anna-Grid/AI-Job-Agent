@@ -1,4 +1,23 @@
 # 🤖 AI-Job-Agent: Autonomous Career Assistant
+![Status](https://img.shields.io/badge/status-active-success)
+![Dockerized](https://img.shields.io/badge/docker-ready-blue)
+![License](https://img.shields.io/badge/license-MIT-lightgrey)
+
+#### 🛠 Tech Stack
+
+![Python](https://img.shields.io/badge/Python-3.11-blue?logo=python&logoColor=white)
+![Pandas](https://img.shields.io/badge/Pandas-Data_Analysis-150458?logo=pandas&logoColor=white)
+![SQL](https://img.shields.io/badge/SQL-Data_Modeling-orange?logo=postgresql&logoColor=white)
+
+![Docker](https://img.shields.io/badge/Docker-Containerization-2496ED?logo=docker&logoColor=white)
+![Linux](https://img.shields.io/badge/Linux-Bash_%7C_Cron-E34F26?logo=linux&logoColor=white)
+
+![OpenAI](https://img.shields.io/badge/OpenAI-LLM_Integration-412991?logo=openai&logoColor=white)
+![NLP](https://img.shields.io/badge/NLP-Text_Processing-yellow)
+
+![Google Sheets](https://img.shields.io/badge/Google_Sheets-API_Integration-34A853?logo=googlesheets&logoColor=white)
+![ETL](https://img.shields.io/badge/Data-ETL_Pipeline-success)
+![Jinja2](https://img.shields.io/badge/Jinja2-Templating-B41717)
 
 An intelligent ETL pipeline and AI agent designed to automate the job search process. The system parses vacancies from multiple platforms, scores them based on candidate profile relevance, and generates tailored application materials using LLMs.
 
@@ -35,10 +54,3 @@ Uses structured JSON responses to reliably populate CV and cover letter template
 ### 3. Google Sheets Integration
 Acts as a lightweight "data lake" for tracking applications.  
 Each processed job is appended to a spreadsheet, enabling real-time monitoring of the pipeline.
-
-## 📦 How to Run
-
-1. **Clone and Configure**:
-   ```bash
-   git clone <your-repo-link>
-   cd ai-job-agent
