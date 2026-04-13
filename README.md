@@ -1,7 +1,7 @@
-# 🤖 AI-Job-Agent: Autonomous Career Assistant
 ![Status](https://img.shields.io/badge/status-active-success)
 ![Dockerized](https://img.shields.io/badge/docker-ready-blue)
 ![License](https://img.shields.io/badge/license-MIT-lightgrey)
+# 🤖 AI-Job-Agent: Autonomous Career Assistant
 
 #### 🛠 Tech Stack
 
